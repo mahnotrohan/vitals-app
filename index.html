@@ -122,16 +122,6 @@ h2{font-size:15px;font-weight:500;color:var(--ink);margin:14px 0 4px}
 .metricname span{font-size:10.5px;color:var(--mut)}
 .biogrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
 .fileline{font-size:11px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px}
-.aibox{margin-top:12px;border-left:3px solid var(--clay);border-radius:0 10px 10px 0}
-.aistatus{font-size:12px;color:var(--ink2);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.aibar{height:6px;background:#F1EFE8;border-radius:99px;overflow:hidden;margin-top:10px}
-.aibar span{display:block;height:100%;width:0;background:var(--clay);transition:width .2s}
-.aiinsight{background:var(--card);border:.5px solid var(--line);border-radius:10px;padding:12px 14px}
-.aiinsight .top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
-.aiinsight .top b{font-size:13px;font-weight:500;color:var(--ink)}
-.aiinsight p{font-size:12.5px;color:var(--ink2);line-height:1.5;margin:0}
-.aiinsight .act{font-size:12.5px;color:var(--clay-ink);margin-top:8px;display:flex;gap:6px}
-.aiinsight .ev{font-size:10.5px;color:var(--mut);margin-top:7px}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{text-align:left;padding:8px 8px;border-bottom:.5px solid #EDE6D9}
 th{color:var(--mut);font-weight:500;font-size:11.5px}
@@ -456,24 +446,11 @@ const LOCAL_PROFILE='vitals.profileDraft.v1';
 const LOCAL_BODY='vitals.bodyMeasurements.v1';
 const LOCAL_REPORTS='vitals.healthReports.v1';
 const LOCAL_BIOMARKERS='vitals.biomarkerObservations.v1';
-const LOCAL_AI_INSIGHTS='vitals.localAiInsights.v1';
+
 let currentPayload=null, currentSource='apple', currentDailySummaries=[];
 let pendingReport=null;
 const WEBLLM_IMPORT_URL='https://esm.run/@mlc-ai/web-llm';
-const WEBLLM_MODELS=[
-  {id:'Qwen2.5-1.5B-Instruct-q4f16_1-MLC',label:'Balanced local model'},
-  {id:'Qwen2.5-0.5B-Instruct-q4f16_1-MLC',label:'Fastest local model'},
-  {id:'Phi-3.5-mini-instruct-q4f16_1-MLC-1k',label:'Larger local model'}
-];
-let webllmEngine=null, webllmModel=localStorage.getItem('vitals.webllmModel.v1')||WEBLLM_MODELS[0].id;
-const aiState={
-  status:'not_started',
-  progress:0,
-  message:'Local AI is off until you generate insights.',
-  error:null,
-  insights:loadLocalAiInsights(),
-  fingerprint:null
-};
+
 const account={
   session:null,
   profile:loadLocalProfile(),
@@ -494,8 +471,6 @@ function loadLocalReports(){ return safeJson(localStorage.getItem(LOCAL_REPORTS)
 function saveLocalReports(rows){ localStorage.setItem(LOCAL_REPORTS,JSON.stringify(rows||[])); }
 function loadLocalBiomarkers(){ return safeJson(localStorage.getItem(LOCAL_BIOMARKERS),[]); }
 function saveLocalBiomarkers(rows){ localStorage.setItem(LOCAL_BIOMARKERS,JSON.stringify(rows||[])); }
-function loadLocalAiInsights(){ return safeJson(localStorage.getItem(LOCAL_AI_INSIGHTS),null); }
-function saveLocalAiInsights(pack){ localStorage.setItem(LOCAL_AI_INSIGHTS,JSON.stringify(pack||{})); aiState.insights=pack; }
 function activeProfile(){ return account.profile || {unit_system:'metric',height_cm:null}; }
 function activeBody(){ return (account.bodyMeasurements||[]).slice().sort((a,b)=>a.measured_on.localeCompare(b.measured_on)); }
 function activeReports(){ return (account.healthReports||[]).slice().sort((a,b)=>(a.report_date||'').localeCompare(b.report_date||'')); }
@@ -1500,7 +1475,7 @@ function reportsSectionHtml(){
       <button class="btn" id="reportUploadInSection" type="button"><i class="ti ti-file-upload" style="font-size:14px"></i> Upload PDF</button>
     </div>
     ${reportReviewHtml()}
-    ${aiInsightsHtml()}
+
     ${cards?`<div class="grid g4" style="margin-top:12px">${cards}</div>`:''}
     ${trendCards?`<div class="biogrid" style="margin-top:12px">${trendCards}</div>`:''}
     <div class="grid g2" style="margin-top:12px">
@@ -1521,7 +1496,6 @@ function setupReportsUi(){
   }
   biomarkerTable(); reportTable();
   biomarkerSummaries(activeBiomarkers()).filter(s=>s.rows.length>=2).slice(0,6).forEach(s=>biomarkerTrendChart('bio_'+s.key,s));
-  setupAiInsightsUi();
 }
 async function savePendingReport(){
   if(!pendingReport) return;

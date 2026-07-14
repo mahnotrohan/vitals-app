@@ -19,12 +19,6 @@ Signed-in users can upload lab report PDFs from the dashboard. Vitals extracts s
 
 Vitals stores only the confirmed structured values, not the raw PDF.
 
-## Local AI insights
-
-Vitals can generate optional local insights from confirmed body entries and biomarker observations with WebLLM. The model runs in a WebGPU-capable browser after the user clicks **Generate**, and insight results are cached locally in the browser. No LLM API key or server is required.
-
-## Run locally
-
 ```bash
 pnpm install
 cp .env.example .env

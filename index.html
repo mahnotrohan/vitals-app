@@ -1516,15 +1516,26 @@ async function savePendingReport(){
   const report={...pendingReport,report_date:reportDate,lab_name:lab};
   try{
     if(account.session&&hasCloud()){
-      await cloud().createHealthReport(report,observations);
-      const data=await cloud().loadAccountData(account.session.user);
-      account.healthReports=data.healthReports||[]; account.biomarkers=data.biomarkers||[];
+      const saved=await cloud().createHealthReport(report,observations);
+      if(saved){
+        account.healthReports=(account.healthReports||[]).concat(saved.report||[]);
+        account.biomarkers=(account.biomarkers||[]).concat(saved.observations||[]);
+      }
+      try{
+        const data=await cloud().loadAccountData(account.session.user);
+        account.healthReports=data.healthReports||[]; account.biomarkers=data.biomarkers||[];
+      }catch(loadErr){
+        console.warn(loadErr);
+        postSaveNotice='Saved the report, but could not refresh account data: '+(loadErr.message||String(loadErr));
+      }
+
     } else {
       addLocalHealthReport(report,observations);
     }
     pendingReport=null;
     if(!currentPayload) currentPayload=blankPayload();
     render(currentPayload);
+    if(postSaveNotice) setStatus(postSaveNotice);
     updateSyncPrompt();
   }catch(err){ setStatus(err.message||String(err)); }
 }

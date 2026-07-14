@@ -140,7 +140,6 @@ The Reports surface follows the same console pattern as Body:
 - Metric tiles show the latest confirmed biomarkers with state pills.
 - Trend charts appear only after at least two observations exist for a biomarker.
 - Report history and biomarker history are shown as quiet tables.
-- Local AI insights live inside Reports as an explicit opt-in panel. The model selector, progress state, generated cards, stale state, and fallback error state all stay inside the same panel.
 
 Raw PDFs stay client-side. Persist only report metadata and confirmed biomarker observations.
 
